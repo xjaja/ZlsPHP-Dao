@@ -2,18 +2,17 @@
 
 /**
  * Class Zls_Dao
- * @method array getHideColumns
  */
 abstract class Zls_Dao
 {
-    private $db;
-    private $rs;
-    private $_cacheTime = null;
-    private $_cacheKey;
+    private $Db;
+    private $Rs;
+    private $CacheTime = null;
+    private $CacheKey;
 
     public function __construct()
     {
-        $this->db = Z::db();
+        $this->Db = Z::db();
     }
 
     /**
@@ -71,9 +70,15 @@ abstract class Zls_Dao
      */
     public function insert($data)
     {
-        $num = $this->getDb()->insert($this->getTable(), $data)->execute();
+        $this->getDb()->insert($this->getTable(), $data);
+        $Before = static::insertBefore($this->getDb(), 'insert');
+        if (is_null($Before)) {
+            $num = $this->getDb()->execute();
 
-        return $num ? $this->getDb()->lastId() : 0;
+            return $num ? $this->getDb()->lastId() : 0;
+        } else {
+            return $Before;
+        }
     }
 
     /**
@@ -82,17 +87,17 @@ abstract class Zls_Dao
      */
     public function &getDb()
     {
-        return $this->db;
+        return $this->Db;
     }
 
     /**
      * 设置Dao中使用的数据库操作对象
-     * @param Zls_Database_ActiveRecord $db
-     * @return \Zls_Dao
+     * @param Zls_Database_ActiveRecord $Db
+     * @return $this
      */
-    public function setDb(Zls_Database_ActiveRecord $db)
+    public function setDb(Zls_Database_ActiveRecord $Db)
     {
-        $this->db = $db;
+        $this->Db = $Db;
 
         return $this;
     }
@@ -111,15 +116,32 @@ abstract class Zls_Dao
     }
 
     /**
+     * 新增前置
+     * @param Zls_Database_ActiveRecord $db
+     * @param string                    $method
+     * @return void|int
+     */
+    public static function insertBefore($db, $method)
+    {
+
+    }
+
+    /**
      * 批量添加数据
      * @param array $rows 需要添加的数据
      * @return int 插入的数据中第一条的id，失败为0
      */
     public function insertBatch($rows)
     {
-        $num = $this->getDb()->insertBatch($this->getTable(), $rows)->execute();
+        $this->getDb()->insertBatch($this->getTable(), $rows);
+        $Before = static::insertBefore($this->getDb(), 'insertBatch');
+        if (is_null($Before)) {
+            $num = $this->getDb()->execute();
 
-        return $num ? $this->getDb()->lastId() : 0;
+            return $num ? $this->getDb()->lastId() : 0;
+        } else {
+            return $Before;
+        }
     }
 
     /**
@@ -131,8 +153,10 @@ abstract class Zls_Dao
     public function update($data, $where)
     {
         $where = is_array($where) ? $where : [$this->getPrimaryKey() => $where];
+        $this->getDb()->where($where)->update($this->getTable(), $data);
+        $Before = static::updateBefore($this->getDb(), 'update');
 
-        return $this->getDb()->where($where)->update($this->getTable(), $data)->execute();
+        return is_null($Before) ? $this->getDb()->execute() : $Before;
     }
 
     /**
@@ -142,6 +166,16 @@ abstract class Zls_Dao
     public function getPrimaryKey()
     {
         return $this->getDb()->from($this->getTable())->getPrimaryKey();
+    }
+
+    /**
+     * 更新前置
+     * @param \Zls_Database_ActiveRecord $db
+     * @param string                     $method
+     * @return void|boolean|array|int
+     */
+    public static function updateBefore($db, $method)
+    {
     }
 
     /**
@@ -155,8 +189,10 @@ abstract class Zls_Dao
         if (!$index) {
             $index = $this->getPrimaryKey();
         }
+        $this->getDb()->updateBatch($this->getTable(), $data, $index);
+        $Before = static::updateBefore($this->getDb(), 'updateBatch');
 
-        return $this->getDb()->updateBatch($this->getTable(), $data, $index)->execute();
+        return is_null($Before) ? $this->getDb()->execute() : $Before;
     }
 
     /**
@@ -182,13 +218,19 @@ abstract class Zls_Dao
         if (!is_null($limit)) {
             $this->getDb()->limit(0, $limit);
         }
-        if (!is_null($this->_cacheTime)) {
-            $this->getDb()->cache($this->_cacheTime, $this->_cacheKey);
+        if (!is_null($this->CacheTime)) {
+            $this->getDb()->cache($this->CacheTime, $this->CacheKey);
         }
-        $this->rs = $this->getDb()->from($this->getTable())->execute();
-        $this->cache();
+        $this->getDb()->from($this->getTable());
+        $result = static::findBefore($this->getDb(), 'findAll');
+        if (is_null($result)) {
+            $this->Rs = $this->getDb()->execute();
+            $result = $this->Rs->rows();
+        }
 
-        return $this->rs->rows();
+        return z::tap($result, function () {
+            $this->__destruct();
+        });
     }
 
     /**
@@ -199,7 +241,7 @@ abstract class Zls_Dao
      */
     public function getReversalColumns($field = null, $exPre = false)
     {
-        if (!$field && method_exists($this, 'getHideColumns')) {
+        if (!$field) {
             $field = static::getHideColumns();
         }
         //z::throwIf(!$field, 500,'[ '.get_class($this).'->getHideColumns() ] not found, did you forget to set ?');
@@ -209,10 +251,37 @@ abstract class Zls_Dao
         return $exPre ? join(is_string($exPre) ? $exPre : ',', $fields) : $fields;
     }
 
+    public function getHideColumns()
+    {
+        return [];
+    }
+
+    /**
+     * 查询前置
+     * @param Zls_Database_ActiveRecord $db
+     * @param string                    $method
+     * @return void|boolean|array|int
+     */
+    public static function findBefore($db, $method)
+    {
+
+    }
+
+    public function __destruct()
+    {
+        $this->cache();
+    }
+
+    /**
+     * 设置缓存
+     * @param int    $cacheTime
+     * @param string $cacheKey
+     * @return $this
+     */
     public function cache($cacheTime = 0, $cacheKey = '')
     {
-        $this->_cacheTime = (int)$cacheTime;
-        $this->_cacheKey = $cacheKey;
+        $this->CacheTime = (int)$cacheTime;
+        $this->CacheKey = $cacheKey;
 
         return $this;
     }
@@ -272,21 +341,24 @@ abstract class Zls_Dao
         if (!$isRows) {
             $this->getDb()->limit(0, 1);
         }
-        if (!is_null($this->_cacheTime)) {
-            $this->getDb()->cache($this->_cacheTime, $this->_cacheKey);
+        if (!is_null($this->CacheTime)) {
+            $this->getDb()->cache($this->CacheTime, $this->CacheKey);
         }
-        $this->rs = $this->getDb()->from($this->getTable())->execute();
-        $this->cache();
-        if ($isRows) {
-            return $this->rs->rows();
-        } else {
-            return $this->rs->row();
+        $this->getDb()->from($this->getTable());
+        $result = static::findBefore($this->getDb(), 'find');
+        if (is_null($result)) {
+            $this->Rs = $this->getDb()->execute();
+            $result = $isRows ? $this->Rs->rows() : $this->Rs->row();
         }
+
+        return z::tap($result, function () {
+            $this->__destruct();
+        });
     }
 
     public function reaultset()
     {
-        return $this->rs;
+        return $this->Rs;
     }
 
     /**
@@ -306,8 +378,20 @@ abstract class Zls_Dao
         if (!empty($cond)) {
             $this->getDb()->where($cond);
         }
+        $Before = static::deleteBefore($this->getDb(), 'delete');
 
-        return $this->getDb()->delete($this->getTable())->execute();
+        return is_null($Before) ? $this->getDb()->delete($this->getTable())->execute() : $Before;
+    }
+
+    /**
+     * 删除前置
+     * @param Zls_Database_ActiveRecord $db
+     * @param string                    $method
+     * @return void|boolean|array|int
+     */
+    public static function deleteBefore($db, $method)
+    {
+
     }
 
     /**
@@ -337,10 +421,10 @@ abstract class Zls_Dao
         if (!$fields) {
             $fields = $this->getReversalColumns(null, true);
         }
-        $total = $this->getDb()->select('count(*) as total')
-                      ->from($this->getTable())
-                      ->execute()
-                      ->value('total');
+        $this->getDb()->select('count(*) as total')
+             ->from($this->getTable());
+        static::findBefore($this->getDb(), 'getPage');
+        $total = $this->getDb()->execute()->value('total');
         if (is_array($where)) {
             $this->getDb()->where($where);
         }
@@ -353,10 +437,15 @@ abstract class Zls_Dao
         if ($pagesize < 1) {
             $pagesize = 1;
         }
-        $data['items'] = $this->getDb()
-                              ->select($fields)
-                              ->limit(($page - 1) * $pagesize, $pagesize)
-                              ->from($this->getTable())->execute()->rows();
+        $this->getDb()
+             ->select($fields)
+             ->limit(($page - 1) * $pagesize, $pagesize)
+             ->from($this->getTable());
+        $result = static::findBefore($this->getDb(), 'getPage');
+        if (is_null($result)) {
+            $result = $this->getDb()->execute()->rows();
+        }
+        $data['items'] = $result;
         $data['page'] = Z::page($total, $page, $pagesize, $url, $pageBarACount);
 
         return $data;
@@ -387,6 +476,8 @@ abstract class Zls_Dao
             $fields = $this->getReversalColumns(null, true);
         }
         $table = $this->getDb()->getTablePrefix() . $this->getTable();
+        /** @noinspection SqlNoDataSourceInspection */
+        /** @noinspection SqlDialectInspection */
         $rs = $this->getDb()
                    ->execute(
                        'select count(*) as total from ' . $table . (strpos(trim($cond), 'order') === 0 ? ' ' : ' where ') . $cond,
