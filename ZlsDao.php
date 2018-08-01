@@ -17,26 +17,6 @@ abstract class Zls_Dao
     }
 
     /**
-     * 获取字段列表（排除掉隐藏的字段）
-     * @param      $field
-     * @param bool $exPre
-     * @return array|string
-     */
-    public function getReversalColumns($field = null, $exPre = false)
-    {
-        if (!$field && method_exists($this, 'getHideColumns')) {
-            $field = static::getHideColumns();
-        }
-        //z::throwIf(!$field, 500,'[ '.get_class($this).'->getHideColumns() ] not found, did you forget to set ?');
-        /** @noinspection PhpParamsInspection */
-        $fields = array_diff(static::getColumns(), is_array($field) ? $field : ($field ? explode(',', $field) : []));
-
-        return $exPre ? join($exPre, $fields) : $fields;
-    }
-
-    abstract public function getColumns();
-
-    /**
      * 读取数据
      * @param      $data
      * @param null $field     字段
@@ -51,6 +31,8 @@ abstract class Zls_Dao
 
         return z::readData($field, $data, $replenish);
     }
+
+    abstract public function getColumns();
 
     public function bean($row, $beanName = '')
     {
@@ -187,9 +169,10 @@ abstract class Zls_Dao
      */
     public function findAll($where = null, array $orderBy = [], $limit = null, $fields = null)
     {
-        if (!is_null($fields)) {
-            $this->getDb()->select($fields);
+        if (!$fields) {
+            $fields = $this->getReversalColumns(null, ',');
         }
+        $this->getDb()->select($fields);
         if (!is_null($where)) {
             $this->getDb()->where($where);
         }
@@ -206,6 +189,24 @@ abstract class Zls_Dao
         $this->cache();
 
         return $this->rs->rows();
+    }
+
+    /**
+     * 获取字段列表（排除掉隐藏的字段）
+     * @param      $field
+     * @param bool $exPre
+     * @return array|string
+     */
+    public function getReversalColumns($field = null, $exPre = false)
+    {
+        if (!$field && method_exists($this, 'getHideColumns')) {
+            $field = static::getHideColumns();
+        }
+        //z::throwIf(!$field, 500,'[ '.get_class($this).'->getHideColumns() ] not found, did you forget to set ?');
+        /** @noinspection PhpParamsInspection */
+        $fields = array_diff(static::getColumns(), is_array($field) ? $field : ($field ? explode(',', $field) : []));
+
+        return $exPre ? join(is_string($exPre) ? $exPre : ',', $fields) : $fields;
     }
 
     public function cache($cacheTime = 0, $cacheKey = '')
@@ -249,9 +250,10 @@ abstract class Zls_Dao
      */
     public function find($values, $isRows = false, array $orderBy = [], $fields = null)
     {
-        if (!is_null($fields)) {
-            $this->getDb()->select($fields);
+        if (!$fields) {
+            $fields = $this->getReversalColumns(null, true);
         }
+        $this->getDb()->select($fields);
         if (!empty($values)) {
             if (is_array($values)) {
                 $is_asso = array_diff_assoc(array_keys($values), range(0, sizeof($values))) ? true : false;
@@ -323,7 +325,7 @@ abstract class Zls_Dao
         $page = 1,
         $pagesize = 10,
         $url = '{page}',
-        $fields = '*',
+        $fields = null,
         array $where = null,
         array $orderBy = [],
         $pageBarACount = 6
@@ -331,6 +333,9 @@ abstract class Zls_Dao
         $data = [];
         if (is_array($where)) {
             $this->getDb()->where($where);
+        }
+        if (!$fields) {
+            $fields = $this->getReversalColumns(null, true);
         }
         $total = $this->getDb()->select('count(*) as total')
                       ->from($this->getTable())
@@ -372,12 +377,15 @@ abstract class Zls_Dao
         $page = 1,
         $pagesize = 10,
         $url = '{page}',
-        $fields = '*',
+        $fields = null,
         $cond = '',
         array $values = [],
         $pageBarACount = 10
     ) {
         $data = [];
+        if (!$fields) {
+            $fields = $this->getReversalColumns(null, true);
+        }
         $table = $this->getDb()->getTablePrefix() . $this->getTable();
         $rs = $this->getDb()
                    ->execute(
