@@ -11,6 +11,9 @@
     }
   ],
   "autoload": {
+    "files": [
+      "ZlsDao.php"
+    ],
     "psr-4": {
       "Zls\\Dao\\": "src/"
     }
