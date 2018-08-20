@@ -31,7 +31,49 @@ abstract class Zls_Dao
         return z::readData($field, $data, $replenish);
     }
 
-    abstract public function getColumns();
+    public function getColumns()
+    {
+        /**
+         * @var \Zls\Command\Create\Mysql $CommandCreateMysql
+         */
+        $CommandCreateMysql = z::extension('Command\Create\Mysql');
+
+        return array_keys($CommandCreateMysql->getTableFieldsInfo(static::getTable(), static::getDb()));
+    }
+
+    /**
+     * 获取表名
+     * @return string
+     */
+    public function getTable()
+    {
+        $className = str_replace('Dao', '', get_called_class());
+        $className = str_replace('\\', '_', $className);
+        $className = substr($className, 1);
+
+        return Z::strCamel2Snake($className);
+    }
+
+    /**
+     * 获取Dao中使用的数据库操作对象
+     * @return Zls_Database_ActiveRecord
+     */
+    public function &getDb()
+    {
+        return $this->Db;
+    }
+
+    /**
+     * 设置Dao中使用的数据库操作对象
+     * @param Zls_Database_ActiveRecord $Db
+     * @return $this
+     */
+    public function setDb(Zls_Database_ActiveRecord $Db)
+    {
+        $this->Db = $Db;
+
+        return $this;
+    }
 
     public function bean($row, $beanName = '')
     {
@@ -79,40 +121,6 @@ abstract class Zls_Dao
         } else {
             return $Before;
         }
-    }
-
-    /**
-     * 获取Dao中使用的数据库操作对象
-     * @return Zls_Database_ActiveRecord
-     */
-    public function &getDb()
-    {
-        return $this->Db;
-    }
-
-    /**
-     * 设置Dao中使用的数据库操作对象
-     * @param Zls_Database_ActiveRecord $Db
-     * @return $this
-     */
-    public function setDb(Zls_Database_ActiveRecord $Db)
-    {
-        $this->Db = $Db;
-
-        return $this;
-    }
-
-    /**
-     * 获取表名
-     * @return string
-     */
-    public function getTable()
-    {
-        $className = str_replace('Dao', '', get_called_class());
-        $className = str_replace('\\', '_', $className);
-        $className = substr($className, 1);
-
-        return Z::strCamel2Snake($className);
     }
 
     /**
@@ -170,8 +178,8 @@ abstract class Zls_Dao
 
     /**
      * 更新前置
-     * @param \Zls_Database_ActiveRecord $db
-     * @param string                     $method
+     * @param Zls_Database_ActiveRecord $db
+     * @param string                    $method
      * @return void|boolean|array|int
      */
     public static function updateBefore($db, $method)

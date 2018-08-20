@@ -50,7 +50,7 @@ class Create
             $_columns[] = '\'' . $value['name'] . "'//" . $value['comment'] . PHP_EOL . '               ';
         }
         $columnsString = 'array(' . PHP_EOL . '              ' . implode(',', $_columns) . ')';
-        $code = "public function getColumns() {\n        return {columns};\n    }\n\n    public function getPrimaryKey() {\n        return '{primaryKey}';\n    }\n\n    public function getTable() {\n        return '{table}';\n    }\n";
+        $code = "public function getColumns() {\n        return {columns};\n    }\n\n    public function getHideColumns() {\n        return array();\n    }\n\n    public function getPrimaryKey() {\n        return '{primaryKey}';\n    }\n\n    public function getTable() {\n        return '{table}';\n    }\n";
         if (strpos(z::getOpt(1), 'bean') !== false) {
             $code .= "\n    public function getBean() {\n        return parent::getBean();\n    }\n";
         }
