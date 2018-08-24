@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Class Zls_Dao
+ * Class Zls_Dao.
  */
 abstract class Zls_Dao
 {
@@ -16,10 +16,12 @@ abstract class Zls_Dao
     }
 
     /**
-     * 读取数据
+     * 读取数据.
+     *
      * @param      $data
      * @param null $field     字段
      * @param bool $replenish 自动补齐
+     *
      * @return array
      */
     public function readData($data, $field = null, $replenish = false)
@@ -34,7 +36,7 @@ abstract class Zls_Dao
     public function getColumns()
     {
         /**
-         * @var \Zls\Command\Create\Mysql $CommandCreateMysql
+         * @var \Zls\Command\Create\Mysql
          */
         $CommandCreateMysql = z::extension('Command\Create\Mysql');
 
@@ -42,7 +44,8 @@ abstract class Zls_Dao
     }
 
     /**
-     * 获取表名
+     * 获取表名.
+     *
      * @return string
      */
     public function getTable()
@@ -56,6 +59,7 @@ abstract class Zls_Dao
 
     /**
      * 获取Dao中使用的数据库操作对象
+     *
      * @return Zls_Database_ActiveRecord
      */
     public function &getDb()
@@ -65,7 +69,9 @@ abstract class Zls_Dao
 
     /**
      * 设置Dao中使用的数据库操作对象
+     *
      * @param Zls_Database_ActiveRecord $Db
+     *
      * @return $this
      */
     public function setDb(Zls_Database_ActiveRecord $Db)
@@ -96,7 +102,7 @@ abstract class Zls_Dao
         foreach ($rows as $row) {
             $object = Z::bean($beanName, $row, false);
             foreach ($row as $key => $value) {
-                $method = "set" . Z::strSnake2Camel($key);
+                $method = 'set'.Z::strSnake2Camel($key);
                 $object->{$method}($value);
             }
             $objects[] = $object->toArray();
@@ -106,8 +112,10 @@ abstract class Zls_Dao
     }
 
     /**
-     * 添加数据
+     * 添加数据.
+     *
      * @param array $data 需要添加的数据
+     *
      * @return int 最后插入的id，失败为0
      */
     public function insert($data)
@@ -124,19 +132,22 @@ abstract class Zls_Dao
     }
 
     /**
-     * 新增前置
+     * 新增前置.
+     *
      * @param Zls_Database_ActiveRecord $db
      * @param string                    $method
+     *
      * @return void|int
      */
     public static function insertBefore($db, $method)
     {
-
     }
 
     /**
-     * 批量添加数据
+     * 批量添加数据.
+     *
      * @param array $rows 需要添加的数据
+     *
      * @return int 插入的数据中第一条的id，失败为0
      */
     public function insertBatch($rows)
@@ -153,10 +164,12 @@ abstract class Zls_Dao
     }
 
     /**
-     * 更新数据
+     * 更新数据.
+     *
      * @param array     $data  需要更新的数据
-     * @param array|int $where 可以是where条件关联数组，还可以是主键值。
-     * @return boolean
+     * @param array|int $where 可以是where条件关联数组，还可以是主键值
+     *
+     * @return bool
      */
     public function update($data, $where)
     {
@@ -168,7 +181,8 @@ abstract class Zls_Dao
     }
 
     /**
-     * 获取主键
+     * 获取主键.
+     *
      * @return string
      */
     public function getPrimaryKey()
@@ -177,20 +191,24 @@ abstract class Zls_Dao
     }
 
     /**
-     * 更新前置
+     * 更新前置.
+     *
      * @param Zls_Database_ActiveRecord $db
      * @param string                    $method
-     * @return void|boolean|array|int
+     *
+     * @return void|bool|array|int
      */
     public static function updateBefore($db, $method)
     {
     }
 
     /**
-     * 更新数据
+     * 更新数据.
+     *
      * @param array  $data  需要批量更新的数据
      * @param string $index 需要批量更新的数据中的主键名称
-     * @return boolean
+     *
+     * @return bool
      */
     public function updateBatch($data, $index = null)
     {
@@ -204,11 +222,13 @@ abstract class Zls_Dao
     }
 
     /**
-     * 获取所有数据
+     * 获取所有数据.
+     *
      * @param array|null  $where   where条件数组
      * @param array|null  $orderBy 排序，比如：array('time'=>'desc')或者array('time'=>'desc','id'=>'asc')
      * @param int|null    $limit   limit数量，比如：10
      * @param string|null $fields  要搜索的字段，比如：id,name。留空默认*
+     *
      * @return array
      */
     public function findAll($where = null, array $orderBy = [], $limit = null, $fields = null)
@@ -242,9 +262,11 @@ abstract class Zls_Dao
     }
 
     /**
-     * 获取字段列表（排除掉隐藏的字段）
+     * 获取字段列表（排除掉隐藏的字段）.
+     *
      * @param      $field
      * @param bool $exPre
+     *
      * @return array|string
      */
     public function getReversalColumns($field = null, $exPre = false)
@@ -265,14 +287,15 @@ abstract class Zls_Dao
     }
 
     /**
-     * 查询前置
+     * 查询前置.
+     *
      * @param Zls_Database_ActiveRecord $db
      * @param string                    $method
-     * @return void|boolean|array|int
+     *
+     * @return void|bool|array|int
      */
     public static function findBefore($db, $method)
     {
-
     }
 
     public function __destruct()
@@ -281,25 +304,29 @@ abstract class Zls_Dao
     }
 
     /**
-     * 设置缓存
+     * 设置缓存.
+     *
      * @param int    $cacheTime
      * @param string $cacheKey
+     *
      * @return $this
      */
     public function cache($cacheTime = 0, $cacheKey = '')
     {
-        $this->CacheTime = (int)$cacheTime;
+        $this->CacheTime = (int) $cacheTime;
         $this->CacheKey = $cacheKey;
 
         return $this;
     }
 
     /**
-     * 根据条件获取一个字段的值或者数组
+     * 根据条件获取一个字段的值或者数组.
+     *
      * @param string       $col     字段名称
      * @param string|array $where   可以是一个主键的值或者主键的值数组，还可以是where条件
-     * @param boolean      $isRows  返回多行记录还是单行记录，true：多行，false：单行
+     * @param bool         $isRows  返回多行记录还是单行记录，true：多行，false：单行
      * @param array        $orderBy 当返回多行记录时，可以指定排序，比如：array('time'=>'desc')或者array('time'=>'desc','id'=>'asc')
+     *
      * @return array
      */
     public function findCol($col, $where, $isRows = false, array $orderBy = [])
@@ -318,11 +345,13 @@ abstract class Zls_Dao
     }
 
     /**
-     * 获取一条或者多条数据
+     * 获取一条或者多条数据.
+     *
      * @param string|array $values  可以是一个主键的值或者主键的值数组，还可以是where条件
-     * @param boolean      $isRows  返回多行记录还是单行记录，true：多行，false：单行
+     * @param bool         $isRows  返回多行记录还是单行记录，true：多行，false：单行
      * @param array        $orderBy 当返回多行记录时，可以指定排序，比如：array('time'=>'desc')或者array('time'=>'desc','id'=>'asc')
      * @param string|null  $fields  要搜索的字段，比如：id,name。留空默认*
+     *
      * @return array
      */
     public function find($values, $isRows = false, array $orderBy = [], $fields = null)
@@ -370,10 +399,12 @@ abstract class Zls_Dao
     }
 
     /**
-     * 根据条件删除记录
+     * 根据条件删除记录.
+     *
      * @param string $values 可以是一个主键的值或者主键主键的值数组
      * @param array  $cond   附加的where条件，关联数组
-     * @return int|boolean  成功则返回影响的行数，失败返回false
+     *
+     * @return int|bool 成功则返回影响的行数，失败返回false
      */
     public function delete($values = null, array $cond = null)
     {
@@ -392,18 +423,20 @@ abstract class Zls_Dao
     }
 
     /**
-     * 删除前置
+     * 删除前置.
+     *
      * @param Zls_Database_ActiveRecord $db
      * @param string                    $method
-     * @return void|boolean|array|int
+     *
+     * @return void|bool|array|int
      */
     public static function deleteBefore($db, $method)
     {
-
     }
 
     /**
-     * 分页方法
+     * 分页方法.
+     *
      * @param int    $page          第几页
      * @param int    $pagesize      每页多少条
      * @param string $url           基础url，里面的{page}会被替换为实际的页码
@@ -411,6 +444,7 @@ abstract class Zls_Dao
      * @param array  $where         where条件，关联数组
      * @param array  $orderBy       排序字段，比如：array('time'=>'desc')或者array('time'=>'desc','id'=>'asc')
      * @param int    $pageBarACount 分页条a的数量
+     *
      * @return array
      */
     public function getPage(
@@ -460,7 +494,8 @@ abstract class Zls_Dao
     }
 
     /**
-     * SQL搜索
+     * SQL搜索.
+     *
      * @param int    $page          第几页
      * @param int    $pagesize      每页多少条
      * @param string $url           基础url，里面的{page}会被替换为实际的页码
@@ -468,6 +503,7 @@ abstract class Zls_Dao
      * @param string $cond          是条件字符串，SQL语句where后面的部分，不要带limit
      * @param array  $values        $cond中的问号的值数组，$cond中使用?可以防止sql注入
      * @param int    $pageBarACount 分页条a的数量，可以参考手册分页条部分
+     *
      * @return array
      */
     public function search(
@@ -483,20 +519,20 @@ abstract class Zls_Dao
         if (!$fields) {
             $fields = $this->getReversalColumns(null, true);
         }
-        $table = $this->getDb()->getTablePrefix() . $this->getTable();
+        $table = $this->getDb()->getTablePrefix().$this->getTable();
         /** @noinspection SqlNoDataSourceInspection */
         /** @noinspection SqlDialectInspection */
         $rs = $this->getDb()
                    ->execute(
-                       'select count(*) as total from ' . $table . (strpos(trim($cond), 'order') === 0 ? ' ' : ' where ') . $cond,
+                       'select count(*) as total from '.$table.(0 === strpos(trim($cond), 'order') ? ' ' : ' where ').$cond,
                        $values
                    );
         $total = $rs->total() > 1 ? $rs->total() : $rs->value('total');
         $data['items'] = $this->getDb()
                               ->execute(
-                                  'select ' . $fields . ' from ' . $table .
-                                  (strpos(trim($cond), 'order') === 0 ? ' ' : ' where ') .
-                                  $cond . ' limit ' . (($page - 1) * $pagesize) . ',' . $pagesize,
+                                  'select '.$fields.' from '.$table.
+                                  (0 === strpos(trim($cond), 'order') ? ' ' : ' where ').
+                                  $cond.' limit '.(($page - 1) * $pagesize).','.$pagesize,
                                   $values
                               )
                               ->rows();

@@ -5,11 +5,14 @@ namespace Zls\Dao;
 use Z;
 
 /**
- * Zls
+ * Zls.
+ *
  * @author        影浅
  * @email         seekwe@gmail.com
+ *
  * @copyright     Copyright (c) 2015 - 2017, 影浅, Inc.
- * @link          ---
+ *
+ * @see          ---
  * @since         v0.0.1
  * @updatetime    2018-08-01 13:00
  */
@@ -47,11 +50,11 @@ class Create
             if ($value['primary']) {
                 $primaryKey = $value['name'];
             }
-            $_columns[] = '\'' . $value['name'] . "'//" . $value['comment'] . PHP_EOL . '               ';
+            $_columns[] = '\''.$value['name']."'//".$value['comment'].PHP_EOL.'               ';
         }
-        $columnsString = 'array(' . PHP_EOL . '              ' . implode(',', $_columns) . ')';
+        $columnsString = 'array('.PHP_EOL.'              '.implode(',', $_columns).')';
         $code = "public function getColumns() {\n        return {columns};\n    }\n\n    public function getHideColumns() {\n        return array();\n    }\n\n    public function getPrimaryKey() {\n        return '{primaryKey}';\n    }\n\n    public function getTable() {\n        return '{table}';\n    }\n";
-        if (strpos(z::getOpt(1), 'bean') !== false) {
+        if (false !== strpos(z::getOpt(1), 'bean')) {
             $code .= "\n    public function getBean() {\n        return parent::getBean();\n    }\n";
         }
         $code = str_replace(['{columns}', '{primaryKey}', '{table}'], [$columnsString, $primaryKey, $table], $code);
