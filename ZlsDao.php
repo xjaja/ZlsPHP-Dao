@@ -226,8 +226,12 @@ abstract class Zls_Dao
             $fields = $this->getReversalColumns(null, ',');
         }
         $this->getDb()->select($fields);
-        if (!is_null($where)) {
+        if (is_array($where)) {
             $this->getDb()->where($where);
+        } elseif ($where instanceof Closure) {
+            $where($this->getDb());
+        } else {
+            $this->getDb()->where([$this->getPrimaryKey() => $where]);
         }
         foreach ($orderBy as $k => $v) {
             $this->getDb()->orderBy($k, $v);
@@ -347,6 +351,8 @@ abstract class Zls_Dao
                 } else {
                     $this->getDb()->where([$this->getPrimaryKey() => array_values($values)]);
                 }
+            } elseif ($values instanceof Closure) {
+                $values($this->getDb());
             } else {
                 $this->getDb()->where([$this->getPrimaryKey() => $values]);
             }
@@ -411,27 +417,22 @@ abstract class Zls_Dao
 
     /**
      * 分页方法.
-     * @param int    $page          第几页
-     * @param int    $pagesize      每页多少条
-     * @param string $url           基础url，里面的{page}会被替换为实际的页码
-     * @param string $fields        select的字段，全部用*，多个字段用逗号分隔
-     * @param array  $where         where条件，关联数组
-     * @param array  $orderBy       排序字段，比如：array('time'=>'desc')或者array('time'=>'desc','id'=>'asc')
-     * @param int    $pageBarACount 分页条a的数量
+     * @param int           $page          第几页
+     * @param int           $pagesize      每页多少条
+     * @param string        $url           基础url，里面的{page}会被替换为实际的页码
+     * @param string        $fields        select的字段，全部用*，多个字段用逗号分隔
+     * @param array|Closure $where         where条件，关联数组
+     * @param array         $orderBy       排序字段，比如：array('time'=>'desc')或者array('time'=>'desc','id'=>'asc')
+     * @param int           $pageBarACount 分页条a的数量
      * @return array
      */
-    public function getPage(
-        $page = 1,
-        $pagesize = 10,
-        $url = '{page}',
-        $fields = null,
-        array $where = null,
-        array $orderBy = [],
-        $pageBarACount = 6
-    ) {
+    public function getPage($page = 1, $pagesize = 10, $url = '{page}', $fields = null, $where = null, array $orderBy = [], $pageBarACount = 6)
+    {
         $data = [];
         if (is_array($where)) {
             $this->getDb()->where($where);
+        } elseif ($where instanceof Closure) {
+            $where($this->getDb());
         }
         if (!$fields) {
             $fields = $this->getReversalColumns(null, true);
@@ -442,6 +443,8 @@ abstract class Zls_Dao
         $total = $this->getDb()->execute()->value('total');
         if (is_array($where)) {
             $this->getDb()->where($where);
+        } elseif ($where instanceof Closure) {
+            $where($this->getDb());
         }
         foreach ($orderBy as $k => $v) {
             $this->getDb()->orderBy($k, $v);
@@ -477,33 +480,25 @@ abstract class Zls_Dao
      * @param int    $pageBarACount 分页条a的数量，可以参考手册分页条部分
      * @return array
      */
-    public function search(
-        $page = 1,
-        $pagesize = 10,
-        $url = '{page}',
-        $fields = null,
-        $cond = '',
-        array $values = [],
-        $pageBarACount = 10
-    ) {
+    public function search($page = 1, $pagesize = 10, $url = '{page}', $fields = null, $cond = '', array $values = [], $pageBarACount = 10)
+    {
         $data = [];
         if (!$fields) {
             $fields = $this->getReversalColumns(null, true);
         }
+        $where = (0 === strpos(trim($cond), 'order') ? ' ' : ' where ') . ($cond ?: 'true');
         $table = $this->getDb()->getTablePrefix() . $this->getTable();
         /** @noinspection SqlNoDataSourceInspection */
         /** @noinspection SqlDialectInspection */
         $rs = $this->getDb()
             ->execute(
-                'select count(*) as total from ' . $table . (0 === strpos(trim($cond), 'order') ? ' ' : ' where ') . $cond,
+                'select count(*) as total from ' . $table . $where,
                 $values
             );
         $total = $rs->total() > 1 ? $rs->total() : $rs->value('total');
         $data['items'] = $this->getDb()
             ->execute(
-                'select ' . $fields . ' from ' . $table .
-                (0 === strpos(trim($cond), 'order') ? ' ' : ' where ') .
-                $cond . ' limit ' . (($page - 1) * $pagesize) . ',' . $pagesize,
+                'select ' . $fields . ' from ' . $table . $where . ' limit ' . (($page - 1) * $pagesize) . ',' . $pagesize,
                 $values
             )
             ->rows();
