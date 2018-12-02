@@ -357,9 +357,14 @@ abstract class Zls_Dao
                 $this->getDb()->where([$this->getPrimaryKey() => $values]);
             }
         }
-        foreach ($orderBy as $k => $v) {
-            $this->getDb()->orderBy($k, $v);
+        if(!!$orderBy){
+            foreach ($orderBy as $k => $v) {
+                $this->getDb()->orderBy($k, $v);
+            }
+        }else{
+            $this->getDb()->orderBy($this->getPrimaryKey(), 'asc');
         }
+
         if (!$isRows) {
             $this->getDb()->limit(0, 1);
         }
