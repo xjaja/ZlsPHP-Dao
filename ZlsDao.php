@@ -312,7 +312,7 @@ abstract class Zls_Dao
      * @param string|array $where   可以是一个主键的值或者主键的值数组，还可以是where条件
      * @param bool         $isRows  返回多行记录还是单行记录，true：多行，false：单行
      * @param array        $orderBy 当返回多行记录时，可以指定排序，比如：array('time'=>'desc')或者array('time'=>'desc','id'=>'asc')
-     * @return array
+     * @return string|array
      */
     public function findCol($col, $where, $isRows = false, array $orderBy = [])
     {
