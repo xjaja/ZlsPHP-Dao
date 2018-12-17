@@ -2,10 +2,11 @@
 
 /**
  * Class Zls_Dao
- * @method selectCount selectCount($where = null, $field = '*')
- * @method selectCount selectSum($where = null, $field = primaryKey)
- * @method selectCount selectMax($where = null, $field = primaryKey)
- * @method selectCount selectMin($where = null, $field = primaryKey)
+ * @method int selectCount($where = null, $field = '*')
+ * @method int selectSum($where = null, $field = primaryKey)
+ * @method int selectMax($where = null, $field = primaryKey)
+ * @method int selectMin($where = null, $field = primaryKey)
+ * @method int selectAvg($where = null, $field = primaryKey)
  */
 abstract class Zls_Dao
 {
@@ -225,10 +226,7 @@ abstract class Zls_Dao
      */
     public function updateBatch($data, $index = null)
     {
-        if (!$index) {
-            $index = $this->getPrimaryKey();
-        }
-        $this->getDb()->updateBatch($this->getTable(), $data, $index);
+        $this->getDb()->updateBatch($this->getTable(), $data, $index ?: $this->getPrimaryKey());
         $Before = static::updateBefore($this->getDb(), 'updateBatch');
 
         return is_null($Before) ? $this->getDb()->execute() : $Before;
@@ -236,18 +234,15 @@ abstract class Zls_Dao
 
     /**
      * 获取所有数据.
-     * @param array|null  $where   where条件数组
-     * @param array|null  $orderBy 排序，比如：array('time'=>'desc')或者array('time'=>'desc','id'=>'asc')
-     * @param int|null    $limit   limit数量，比如：10
-     * @param string|null $fields  要搜索的字段，比如：id,name。留空默认*
+     * @param array|null     $where   where条件数组
+     * @param array|null     $orderBy 排序，比如：array('time'=>'desc')或者array('time'=>'desc','id'=>'asc')
+     * @param int|null|array $limit   limit数量，比如：10
+     * @param string|null    $fields  要搜索的字段，比如：id,name。留空默认*
      * @return array
      */
     public function findAll($where = null, array $orderBy = [], $limit = null, $fields = null)
     {
-        if (!$fields) {
-            $fields = $this->getReversalColumns(null, ',');
-        }
-        $this->getDb()->select($fields);
+        $this->getDb()->select($fields ?: $this->getReversalColumns(null, ','));
         if (is_array($where)) {
             $this->getDb()->where($where);
         } elseif ($where instanceof Closure) {
@@ -259,7 +254,13 @@ abstract class Zls_Dao
             $this->getDb()->orderBy($k, $v);
         }
         if (!is_null($limit)) {
-            $this->getDb()->limit(0, $limit);
+            if (is_array($limit)) {
+                list($offset, $count) = $limit;
+            } else {
+                $offset = 0;
+                $count  = $limit;
+            }
+            $this->getDb()->limit($offset, $count);
         }
         if (!is_null($this->CacheTime)) {
             $this->getDb()->cache($this->CacheTime, $this->CacheKey);
@@ -287,7 +288,7 @@ abstract class Zls_Dao
         if (!$field) {
             $field = static::getHideColumns();
         }
-        //z::throwIf(!$field, 500,'[ '.get_class($this).'->getHideColumns() ] not found, did you forget to set ?');
+        // z::throwIf(!$field, 500,'[ '.get_class($this).'->getHideColumns() ] not found, did you forget to set ?');
         /** @noinspection PhpParamsInspection */
         $fields = array_diff(static::getColumns(), is_array($field) ? $field : ($field ? explode(',', $field) : []));
 
@@ -330,10 +331,10 @@ abstract class Zls_Dao
 
     /**
      * 根据条件获取一个字段的值或者数组.
-     * @param string       $col     字段名称
+     * @param string                $col     字段名称
      * @param string|array|callable $where   可以是一个主键的值或者主键的值数组，还可以是where条件
-     * @param bool         $isRows  返回多行记录还是单行记录，true：多行，false：单行
-     * @param array        $orderBy 当返回多行记录时，可以指定排序，比如：array('time'=>'desc')或者array('time'=>'desc','id'=>'asc')
+     * @param bool                  $isRows  返回多行记录还是单行记录，true：多行，false：单行
+     * @param array                 $orderBy 当返回多行记录时，可以指定排序，比如：array('time'=>'desc')或者array('time'=>'desc','id'=>'asc')
      * @return string|array
      */
     public function findCol($col, $where, $isRows = false, array $orderBy = [])
@@ -361,10 +362,7 @@ abstract class Zls_Dao
      */
     public function find($values, $isRows = false, array $orderBy = [], $fields = null)
     {
-        if (!$fields) {
-            $fields = $this->getReversalColumns(null, true);
-        }
-        $this->getDb()->select($fields);
+        $this->getDb()->select($fields ?: $this->getReversalColumns(null, true));
         if (!empty($values)) {
             if (is_array($values)) {
                 $isAsso = array_diff_assoc(array_keys($values), range(0, sizeof($values))) ? true : false;
@@ -478,6 +476,7 @@ abstract class Zls_Dao
 
     /**
      * SQL搜索.
+     * @deprecated   请使用getPage()，其中的$where支持闭包可以满足大部分需求
      * @param int    $page          第几页
      * @param int    $pagesize      每页多少条
      * @param string $url           基础url，里面的{page}会被替换为实际的页码
