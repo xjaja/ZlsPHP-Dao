@@ -26,12 +26,14 @@ abstract class Zls_Dao
         if (Z::strBeginsWith($name, 'select')) {
             $select = strtoupper(substr($name, 6));
             $where  = Z::arrayGet($args, 0, []);
+            $db     = $this->getDb();
+            is_callable($where) ? $where($db) : $db->where($where);
             $isAll  = ['COUNT'];
             $fields = Z::arrayGet($args, 1, in_array($select, $isAll) ? '*' : $this->getPrimaryKey());
-            $this->getDb()->from($this->getTable())->select("{$select}({$fields}) as {$select}")->where($where);
-            static::findBefore($this->getDb(), $name);
+            $db->from($this->getTable())->select("{$select}({$fields}) as {$select}");
+            static::findBefore($db, $name);
 
-            return $this->getDb()->execute()->value($select);
+            return $db->execute()->value($select);
         } else {
             $class = get_called_class();
             Z::throwIf(true, 500, "Call to undefined method {$class}->{$name}()");
@@ -242,16 +244,11 @@ abstract class Zls_Dao
      */
     public function findAll($where = null, array $orderBy = [], $limit = null, $fields = null)
     {
-        $this->getDb()->select($fields ?: $this->getReversalColumns(null, ','));
-        if (is_array($where)) {
-            $this->getDb()->where($where);
-        } elseif ($where instanceof Closure) {
-            $where($this->getDb());
-        } else {
-            $this->getDb()->where([$this->getPrimaryKey() => $where]);
-        }
+        $db = $this->getDb();
+        $db->select($fields ?: $this->getReversalColumns(null, ','));
+        is_array($where) ? $db->where($where) : (is_callable($where) ? $where($db) : $db->where([$this->getPrimaryKey() => $where]));
         foreach ($orderBy as $k => $v) {
-            $this->getDb()->orderBy($k, $v);
+            $db->orderBy($k, $v);
         }
         if (!is_null($limit)) {
             if (is_array($limit)) {
@@ -260,15 +257,15 @@ abstract class Zls_Dao
                 $offset = 0;
                 $count  = $limit;
             }
-            $this->getDb()->limit($offset, $count);
+            $db->limit($offset, $count);
         }
         if (!is_null($this->CacheTime)) {
-            $this->getDb()->cache($this->CacheTime, $this->CacheKey);
+            $db->cache($this->CacheTime, $this->CacheKey);
         }
-        $this->getDb()->from($this->getTable());
-        $result = static::findBefore($this->getDb(), 'findAll');
+        $db->from($this->getTable());
+        $result = static::findBefore($db, 'findAll');
         if (is_null($result)) {
-            $this->Rs = $this->getDb()->execute();
+            $this->Rs = $db->execute();
             $result   = $this->Rs->rows();
         }
 
@@ -362,38 +359,37 @@ abstract class Zls_Dao
      */
     public function find($values, $isRows = false, array $orderBy = [], $fields = null)
     {
-        $this->getDb()->select($fields ?: $this->getReversalColumns(null, true));
+        $db = $this->getDb();
+        $db->select($fields ?: $this->getReversalColumns(null, true));
         if (!empty($values)) {
             if (is_array($values)) {
                 $isAsso = array_diff_assoc(array_keys($values), range(0, sizeof($values))) ? true : false;
                 if ($isAsso) {
-                    $this->getDb()->where($values);
+                    $db->where($values);
                 } else {
-                    $this->getDb()->where([$this->getPrimaryKey() => array_values($values)]);
+                    $db->where([$this->getPrimaryKey() => array_values($values)]);
                 }
-            } elseif ($values instanceof Closure) {
-                $values($this->getDb());
             } else {
-                $this->getDb()->where([$this->getPrimaryKey() => $values]);
+                is_callable($values) ? $values($db) : $db->where([$this->getPrimaryKey() => $values]);
             }
         }
         if (!!$orderBy) {
             foreach ($orderBy as $k => $v) {
-                $this->getDb()->orderBy($k, $v);
+                $db->orderBy($k, $v);
             }
         } else {
-            $this->getDb()->orderBy($this->getPrimaryKey(), 'asc');
+            $db->orderBy($this->getPrimaryKey(), 'asc');
         }
         if (!$isRows) {
-            $this->getDb()->limit(0, 1);
+            $db->limit(0, 1);
         }
         if (!is_null($this->CacheTime)) {
-            $this->getDb()->cache($this->CacheTime, $this->CacheKey);
+            $db->cache($this->CacheTime, $this->CacheKey);
         }
-        $this->getDb()->from($this->getTable());
-        $result = static::findBefore($this->getDb(), 'find');
+        $db->from($this->getTable());
+        $result = static::findBefore($db, 'find');
         if (is_null($result)) {
-            $this->Rs = $this->getDb()->execute();
+            $this->Rs = $db->execute();
             $result   = $isRows ? $this->Rs->rows() : $this->Rs->row();
         }
 
