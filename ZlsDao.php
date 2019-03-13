@@ -147,8 +147,8 @@ abstract class Zls_Dao
      */
     public function insert($data)
     {
-        $this->getDb()->insert($this->getTable(), $data);
         $Before = static::insertBefore($this->getDb(), 'insert', $data);
+        $this->getDb()->insert($this->getTable(), $data);
         if (is_null($Before)) {
             $num = $this->getDb()->execute();
 
@@ -162,10 +162,10 @@ abstract class Zls_Dao
      * 新增前置.
      * @param Zls_Database_ActiveRecord $db
      * @param string                    $method
-     * @param array                     $datas  批量添加时为多维数组
+     * @param array                     $data  批量添加时为多维数组
      * @return void
      */
-    public static function insertBefore($db, $method, $datas)
+    public static function insertBefore($db, $method, &$data)
     { }
 
     /**
@@ -175,8 +175,8 @@ abstract class Zls_Dao
      */
     public function insertBatch($rows)
     {
-        $this->getDb()->insertBatch($this->getTable(), $rows);
         $Before = static::insertBefore($this->getDb(), 'insertBatch', $rows);
+        $this->getDb()->insertBatch($this->getTable(), $rows);
         if (is_null($Before)) {
             $num = $this->getDb()->execute();
 
@@ -195,10 +195,10 @@ abstract class Zls_Dao
     public function update($data, $where)
     {
         $where = is_array($where) ? $where : [$this->getPrimaryKey() => $where];
-        $this->getDb()->where($where)->update($this->getTable(), $data);
-        $Before = static::updateBefore($this->getDb(), 'update', $data);
-
-        return is_null($Before) ? $this->getDb()->execute() : $Before;
+        $db = $this->getDb()->where($where);
+        $Before = static::updateBefore($db, 'update', $data);
+        $db->update($this->getTable(), $data);
+        return is_null($Before) ? $db->execute() : $Before;
     }
 
     /**
@@ -214,10 +214,10 @@ abstract class Zls_Dao
      * 更新前置.
      * @param Zls_Database_ActiveRecord $db
      * @param string                    $method
-     * @param array                     $datas  批量更新时为多维数组
+     * @param array                     $data  批量更新时为多维数组
      * @return void
      */
-    public static function updateBefore($db, $method, $datas)
+    public static function updateBefore($db, $method, &$data)
     { }
 
     /**
@@ -228,10 +228,10 @@ abstract class Zls_Dao
      */
     public function updateBatch($data, $index = null)
     {
-        $this->getDb()->updateBatch($this->getTable(), $data, $index ?: $this->getPrimaryKey());
+        $db = $this->getDb();
         $Before = static::updateBefore($this->getDb(), 'updateBatch', $data);
-
-        return is_null($Before) ? $this->getDb()->execute() : $Before;
+        $db->updateBatch($this->getTable(), $data, $index ?: $this->getPrimaryKey());
+        return is_null($Before) ? $db->execute() : $Before;
     }
 
     /**
