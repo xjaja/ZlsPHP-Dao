@@ -148,7 +148,7 @@ abstract class Zls_Dao
     public function insert($data)
     {
         $this->getDb()->insert($this->getTable(), $data);
-        $Before = static::insertBefore($this->getDb(), 'insert');
+        $Before = static::insertBefore($this->getDb(), 'insert', $data);
         if (is_null($Before)) {
             $num = $this->getDb()->execute();
 
@@ -162,11 +162,11 @@ abstract class Zls_Dao
      * 新增前置.
      * @param Zls_Database_ActiveRecord $db
      * @param string                    $method
+     * @param array                     $datas  批量添加时为多维数组
      * @return void
      */
-    public static function insertBefore($db, $method)
-    {
-    }
+    public static function insertBefore($db, $method, $datas)
+    { }
 
     /**
      * 批量添加数据.
@@ -176,7 +176,7 @@ abstract class Zls_Dao
     public function insertBatch($rows)
     {
         $this->getDb()->insertBatch($this->getTable(), $rows);
-        $Before = static::insertBefore($this->getDb(), 'insertBatch');
+        $Before = static::insertBefore($this->getDb(), 'insertBatch', $rows);
         if (is_null($Before)) {
             $num = $this->getDb()->execute();
 
@@ -196,7 +196,7 @@ abstract class Zls_Dao
     {
         $where = is_array($where) ? $where : [$this->getPrimaryKey() => $where];
         $this->getDb()->where($where)->update($this->getTable(), $data);
-        $Before = static::updateBefore($this->getDb(), 'update');
+        $Before = static::updateBefore($this->getDb(), 'update', $data);
 
         return is_null($Before) ? $this->getDb()->execute() : $Before;
     }
@@ -214,11 +214,11 @@ abstract class Zls_Dao
      * 更新前置.
      * @param Zls_Database_ActiveRecord $db
      * @param string                    $method
+     * @param array                     $datas  批量更新时为多维数组
      * @return void
      */
-    public static function updateBefore($db, $method)
-    {
-    }
+    public static function updateBefore($db, $method, $datas)
+    { }
 
     /**
      * 更新数据.
@@ -229,7 +229,7 @@ abstract class Zls_Dao
     public function updateBatch($data, $index = null)
     {
         $this->getDb()->updateBatch($this->getTable(), $data, $index ?: $this->getPrimaryKey());
-        $Before = static::updateBefore($this->getDb(), 'updateBatch');
+        $Before = static::updateBefore($this->getDb(), 'updateBatch', $data);
 
         return is_null($Before) ? $this->getDb()->execute() : $Before;
     }
@@ -304,8 +304,7 @@ abstract class Zls_Dao
      * @return void
      */
     public static function findBefore($db, $method)
-    {
-    }
+    { }
 
     public function __destruct()
     {
@@ -432,8 +431,7 @@ abstract class Zls_Dao
      * @return void
      */
     public static function deleteBefore($db, $method)
-    {
-    }
+    { }
 
     /**
      * 分页方法.
