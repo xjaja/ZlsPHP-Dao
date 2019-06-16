@@ -20,15 +20,14 @@ abstract class Zls_Dao
         $this->Db = Z::db();
     }
 
-
     public function __call($name, $args)
     {
         if (Z::strBeginsWith($name, 'select')) {
             $select = strtoupper(substr($name, 6));
-            $where  = Z::arrayGet($args, 0, []);
-            $db     = $this->getDb();
+            $where = Z::arrayGet($args, 0, []);
+            $db = $this->getDb();
             is_callable($where) ? $where($db) : $db->where($where);
-            $isAll  = ['COUNT'];
+            $isAll = ['COUNT'];
             $fields = Z::arrayGet($args, 1, in_array($select, $isAll) ? '*' : $this->getPrimaryKey());
             $db->from($this->getTable())->select("{$select}({$fields}) as {$select}");
             static::findBefore($db, $name);
@@ -105,7 +104,7 @@ abstract class Zls_Dao
         return Z::bean($beanName ? $beanName : $this->getBean(), $row, false)->toArray();
     }
 
-    final protected function getBean()
+    protected function getBean()
     {
         $beanName = strstr(get_class($this), 'Dao', false);
         $beanName = str_replace('Dao_', '', $beanName);
@@ -127,7 +126,7 @@ abstract class Zls_Dao
     public function beans($rows, $beanName = '')
     {
         $beanName = $beanName ?: $this->getBean();
-        $objects  = [];
+        $objects = [];
         foreach ($rows as $row) {
             $object = Z::bean($beanName, $row, false);
             foreach ($row as $key => $value) {
@@ -165,8 +164,8 @@ abstract class Zls_Dao
      * @param array                     $data  批量添加时为多维数组
      * @return void
      */
-    public static function insertBefore($db, $method, &$data)
-    { }
+    public static function insertBefore(\Zls_Database_ActiveRecord $db, $method, &$data)
+    {}
 
     /**
      * 批量添加数据.
@@ -217,8 +216,8 @@ abstract class Zls_Dao
      * @param array                     $data  批量更新时为多维数组
      * @return void
      */
-    public static function updateBefore($db, $method, &$data)
-    { }
+    public static function updateBefore(\Zls_Database_ActiveRecord $db, $method, &$data)
+    {}
 
     /**
      * 更新数据.
@@ -255,7 +254,7 @@ abstract class Zls_Dao
                 list($offset, $count) = $limit;
             } else {
                 $offset = 0;
-                $count  = $limit;
+                $count = $limit;
             }
             $db->limit($offset, $count);
         }
@@ -266,7 +265,7 @@ abstract class Zls_Dao
         $result = static::findBefore($db, 'findAll');
         if (is_null($result)) {
             $this->Rs = $db->execute();
-            $result   = $this->Rs->rows();
+            $result = $this->Rs->rows();
         }
 
         return z::tap($result, function () {
@@ -303,8 +302,8 @@ abstract class Zls_Dao
      * @param string                    $method
      * @return void
      */
-    public static function findBefore($db, $method)
-    { }
+    public static function findBefore(\Zls_Database_ActiveRecord $db, $method)
+    {}
 
     public function __destruct()
     {
@@ -319,8 +318,8 @@ abstract class Zls_Dao
      */
     public function cache($cacheTime = 0, $cacheKey = '')
     {
-        $this->CacheTime = (int)$cacheTime;
-        $this->CacheKey  = $cacheKey;
+        $this->CacheTime = (int) $cacheTime;
+        $this->CacheKey = $cacheKey;
 
         return $this;
     }
@@ -389,7 +388,7 @@ abstract class Zls_Dao
         $result = static::findBefore($db, 'find');
         if (is_null($result)) {
             $this->Rs = $db->execute();
-            $result   = $isRows ? $this->Rs->rows() : $this->Rs->row();
+            $result = $isRows ? $this->Rs->rows() : $this->Rs->row();
         }
 
         return z::tap($result, function () {
@@ -430,8 +429,8 @@ abstract class Zls_Dao
      * @param string                    $method
      * @return void
      */
-    public static function deleteBefore($db, $method)
-    { }
+    public static function deleteBefore(\Zls_Database_ActiveRecord $db, $method)
+    {}
 
     /**
      * 分页方法.
@@ -446,9 +445,9 @@ abstract class Zls_Dao
      */
     public function getPage($page = 1, $pagesize = 10, $url = '{page}', $fields = null, $where = null, array $orderBy = [], $pageBarACount = 6)
     {
-        $data   = [];
+        $data = [];
         $fields = $fields ?: $this->getReversalColumns(null, true);
-        $total  = $this->selectCount($where);
+        $total = $this->selectCount($where);
         if (is_array($where)) {
             $this->getDb()->where($where);
         } elseif ($where instanceof Closure) {
@@ -490,19 +489,19 @@ abstract class Zls_Dao
         $table = $this->getDb()->getTablePrefix() . $this->getTable();
         /** @noinspection SqlNoDataSourceInspection */
         /** @noinspection SqlDialectInspection */
-        $rs            = $this->getDb()
+        $rs = $this->getDb()
             ->execute(
                 'select count(*) as total from ' . $table . $where,
                 $values
             );
-        $total         = $rs->total() > 1 ? $rs->total() : $rs->value('total');
+        $total = $rs->total() > 1 ? $rs->total() : $rs->value('total');
         $data['items'] = $this->getDb()
             ->execute(
                 'select ' . $fields . ' from ' . $table . $where . ' limit ' . (($page - 1) * $pagesize) . ',' . $pagesize,
                 $values
             )
             ->rows();
-        $data['page']  = Z::page($total, $page, $pagesize, $url, $pageBarACount);
+        $data['page'] = Z::page($total, $page, $pagesize, $url, $pageBarACount);
 
         return $data;
     }
