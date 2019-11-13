@@ -3,10 +3,10 @@
 /**
  * Class Zls_Dao
  * @method int selectCount($where = null, $field = '*')
- * @method int selectSum($where = null, $field = primaryKey)
- * @method int selectMax($where = null, $field = primaryKey)
- * @method int selectMin($where = null, $field = primaryKey)
- * @method int selectAvg($where = null, $field = primaryKey)
+ * @method int selectSum($where = null, $field = 'primaryKey')
+ * @method int selectMax($where = null, $field = 'primaryKey')
+ * @method int selectMin($where = null, $field = 'primaryKey')
+ * @method int selectAvg($where = null, $field = 'primaryKey')
  */
 abstract class Zls_Dao
 {
@@ -162,7 +162,7 @@ abstract class Zls_Dao
      * @param Zls_Database_ActiveRecord $db
      * @param string                    $method
      * @param array                     $data  批量添加时为多维数组
-     * @return void
+     * @return void|int
      */
     public static function insertBefore(\Zls_Database_ActiveRecord $db, $method, &$data)
     {}
@@ -214,7 +214,7 @@ abstract class Zls_Dao
      * @param Zls_Database_ActiveRecord $db
      * @param string                    $method
      * @param array                     $data  批量更新时为多维数组
-     * @return void
+     * @return void|int
      */
     public static function updateBefore(\Zls_Database_ActiveRecord $db, $method, &$data)
     {}
@@ -300,7 +300,7 @@ abstract class Zls_Dao
      * 查询前置.
      * @param Zls_Database_ActiveRecord $db
      * @param string                    $method
-     * @return void
+     * @return void|array
      */
     public static function findBefore(\Zls_Database_ActiveRecord $db, $method)
     {}
@@ -425,11 +425,13 @@ abstract class Zls_Dao
 
     /**
      * 删除前置.
+     *
      * @param Zls_Database_ActiveRecord $db
-     * @param string                    $method
-     * @return void
+     * @param array                     $wheres
+     *
+     * @return void|int
      */
-    public static function deleteBefore(\Zls_Database_ActiveRecord $db, $method)
+    public static function deleteBefore(\Zls_Database_ActiveRecord $db, $wheres = [])
     {}
 
     /**
@@ -445,7 +447,6 @@ abstract class Zls_Dao
      */
     public function getPage($page = 1, $pagesize = 10, $url = '{page}', $fields = null, $where = null, array $orderBy = [], $pageBarACount = 6)
     {
-        $data = [];
         $fields = $fields ?: $this->getReversalColumns(null, true);
         $total = $this->selectCount($where);
         if (is_array($where)) {

@@ -17,10 +17,10 @@ class Create
 {
     public function bean($columns)
     {
-        $fields = [];
+        $fields        = [];
         $fieldTemplate = "    //{comment}\n    protected \${column0};";
         foreach ($columns as $value) {
-            $column = str_replace(' ', '', ucwords(str_replace('_', ' ', $value['name'])));
+            $column  = str_replace(' ', '', ucwords(str_replace('_', ' ', $value['name'])));
             $column0 = $value['name'];
             /*$column1 = lcfirst($column);*/
             $fields[] = str_replace(
@@ -39,10 +39,10 @@ class Create
         return $code;
     }
 
-    public function dao($columns, $table)
+    public function dao($columns, $table, $isAfresh = false)
     {
         $primaryKey = '';
-        $_columns = [];
+        $_columns   = [];
         foreach ($columns as $value) {
             if ($value['primary']) {
                 $primaryKey = $value['name'];
@@ -50,7 +50,7 @@ class Create
             $_columns[] = '\'' . $value['name'] . "',//" . $value['comment'] . PHP_EOL . '            ';
         }
         $columnsString = '[' . PHP_EOL . '            ' . implode('', $_columns) . ']';
-        $code = "public function getColumns() {
+        $code          = "public function getColumns() {
         return {columns};
     }
 
@@ -64,13 +64,14 @@ class Create
 
     public function getTable() {
         return '{table}';
-    }
-
+    }";
+        if (!$isAfresh) {
+            $code = "
     public static function findBefore(\Zls_Database_ActiveRecord \$db, \$method) {
 
     }
 
-    public static function deleteBefore(\Zls_Database_ActiveRecord \$db, \$method) {
+    public static function deleteBefore(\Zls_Database_ActiveRecord \$db, \$wheres = []) {
 
     }
 
@@ -82,14 +83,15 @@ class Create
 
     }
 ";
+        }
         if (false !== strpos(z::getOpt(1), 'bean')) {
             $code .= "
     public function getBean() {
         return parent::getBean();
     }";
         }
-        $code = str_replace(['{columns}', '{primaryKey}', '{table}'], [$columnsString, $primaryKey, $table], $code);
-        $methods = ['getColumns', 'getHideColumns', 'getPrimaryKey', 'getTable', 'getBean', 'insertBefore', 'updateBefore', 'findBefore', 'deleteBefore'];
+        $code    = str_replace(['{columns}', '{primaryKey}', '{table}'], [$columnsString, $primaryKey, $table], $code);
+        $methods = ['getColumns', 'getHideColumns', 'getPrimaryKey', 'getTable', 'getBean'];
 
         return [$code, $primaryKey ? '' : 'Did not find the primary key, please fill in manually.', $methods];
     }
