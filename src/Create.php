@@ -66,7 +66,7 @@ class Create
         return '{table}';
     }";
         if (!$isAfresh) {
-            $code = "
+            $code .= "
     public static function findBefore(\Zls_Database_ActiveRecord \$db, \$method) {
 
     }
