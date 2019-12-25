@@ -245,7 +245,6 @@ abstract class Zls_Dao
     {
         $db = $this->getDb();
         $db->select($fields ?: $this->getReversalColumns(null, ','));
-        is_array($where) ? $db->where($where) : (is_callable($where) ? $where($db) : $db->where([$this->getPrimaryKey() => $where]));
         foreach ($orderBy as $k => $v) {
             $db->orderBy($k, $v);
         }
@@ -262,6 +261,7 @@ abstract class Zls_Dao
             $db->cache($this->CacheTime, $this->CacheKey);
         }
         $db->from($this->getTable());
+        is_array($where) ? $db->where($where) : (is_callable($where) ? $where($db) : $db->where([$this->getPrimaryKey() => $where]));
         $result = static::findBefore($db, 'findAll');
         if (is_null($result)) {
             $this->Rs = $db->execute();
@@ -359,18 +359,6 @@ abstract class Zls_Dao
     {
         $db = $this->getDb();
         $db->select($fields ?: $this->getReversalColumns(null, true));
-        if (!empty($values)) {
-            if (is_array($values)) {
-                $isAsso = array_diff_assoc(array_keys($values), range(0, sizeof($values))) ? true : false;
-                if ($isAsso) {
-                    $db->where($values);
-                } else {
-                    $db->where([$this->getPrimaryKey() => array_values($values)]);
-                }
-            } else {
-                is_callable($values) ? $values($db) : $db->where([$this->getPrimaryKey() => $values]);
-            }
-        }
         if (!!$orderBy) {
             foreach ($orderBy as $k => $v) {
                 $db->orderBy($k, $v);
@@ -385,6 +373,18 @@ abstract class Zls_Dao
             $db->cache($this->CacheTime, $this->CacheKey);
         }
         $db->from($this->getTable());
+        if (!empty($values)) {
+            if (is_array($values)) {
+                $isAsso = array_diff_assoc(array_keys($values), range(0, sizeof($values))) ? true : false;
+                if ($isAsso) {
+                    $db->where($values);
+                } else {
+                    $db->where([$this->getPrimaryKey() => array_values($values)]);
+                }
+            } else {
+                is_callable($values) ? $values($db) : $db->where([$this->getPrimaryKey() => $values]);
+            }
+        }
         $result = static::findBefore($db, 'find');
         if (is_null($result)) {
             $this->Rs = $db->execute();
