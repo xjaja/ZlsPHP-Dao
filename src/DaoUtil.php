@@ -25,7 +25,7 @@ trait DaoUtil
         } elseif (in_array($method, ['insertBatch', 'updateBatch'], true)) {
             foreach ($data as &$_data) {
                 $_data[static::$dataTimeFormat['updateKey']] = $time;
-                if ($method === 'insert') {
+                if ($method === 'insertBatch') {
                     $_data[static::$dataTimeFormat['createKey']] = $time;
                 }
             }
