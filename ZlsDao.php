@@ -462,11 +462,11 @@ abstract class Zls_Dao
      * 删除前置.
      *
      * @param Zls_Database_ActiveRecord $db
-     * @param array                     $wheres
+     * @param string                    $method
      *
      * @return void|int
      */
-    public static function deleteBefore(\Zls_Database_ActiveRecord $db, $wheres = [])
+    public static function deleteBefore(\Zls_Database_ActiveRecord $db, $method)
     {
     }
 
